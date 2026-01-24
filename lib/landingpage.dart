@@ -228,19 +228,37 @@ class LandingPage extends StatelessWidget {
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildFeatureCard(
-                    icon: Icons.search,
-                    title: "Search Medications",
+                  Expanded(
+                    child: _buildFeatureCard(
+                      icon: Icons.search,
+                      title: "Search Medications",
+                    ),
                   ),
-                  _buildFeatureCard(
-                    icon: Icons.trending_down,
-                    title: "Compare Prices",
+                  Container(
+                    width: 1.5,
+                    height: 140,
+                    color: const Color(0xFF2D7A4A).withOpacity(0.25),
+                    margin: const EdgeInsets.symmetric(horizontal: 30),
                   ),
-                  _buildFeatureCard(
-                    icon: Icons.warning_amber_rounded,
-                    title: "Report Shortages",
+                  Expanded(
+                    child: _buildFeatureCard(
+                      icon: Icons.trending_down,
+                      title: "Compare Prices",
+                    ),
+                  ),
+                  Container(
+                    width: 1.5,
+                    height: 140,
+                    color: const Color(0xFF2D7A4A).withOpacity(0.25),
+                    margin: const EdgeInsets.symmetric(horizontal: 30),
+                  ),
+                  Expanded(
+                    child: _buildFeatureCard(
+                      icon: Icons.warning_amber_rounded,
+                      title: "Report Shortages",
+                    ),
                   ),
                 ],
               ),
