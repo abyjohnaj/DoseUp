@@ -30,14 +30,6 @@ class _ChatbotPageState extends State<ChatbotPage> {
   ];
   bool _isLoading = false;
 
-  final List<String> _aiResponses = [
-    "Searching for {medicine} prices...",
-    "I found several options for {medicine}. Let me gather the best prices for you.",
-    "Here are the available options for {medicine} in your area.",
-    "Based on current availability, {medicine} is most affordable at...",
-    "Would you like me to compare prices for {medicine}?",
-  ];
-
   void _sendMessage() async {
     if (_messageController.text.isEmpty) return;
 

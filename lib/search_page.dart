@@ -11,7 +11,6 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _strengthController = TextEditingController();
   List<String> displayedMedicines = [];
-  bool _showResults = false;
 
   // Sample medicine data
   final List<String> allMedicines = [
@@ -42,7 +41,6 @@ class _SearchPageState extends State<SearchPage> {
     if (medicineName.isEmpty && strength.isEmpty) {
       setState(() {
         displayedMedicines = allMedicines;
-        _showResults = true;
       });
     } else {
       setState(() {
@@ -55,7 +53,6 @@ class _SearchPageState extends State<SearchPage> {
               return matchesMedicine && matchesStrength;
             })
             .toList();
-        _showResults = true;
       });
     }
   }
@@ -296,18 +293,48 @@ class _SearchPageState extends State<SearchPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                TextField(
-                                  controller: _strengthController,
+                                DropdownButtonFormField<String>(
+                                  value: _strengthController.text.isEmpty
+                                      ? null
+                                      : _strengthController.text,
+                                  hint: const Text("Select strength"),
+                                  items: [
+                                    '5mg',
+                                    '10mg',
+                                    '20mg',
+                                    '50mg',
+                                    '100mg',
+                                    '200mg',
+                                    '250mg',
+                                    '500mg',
+                                    '1000mg',
+                                    '1g',
+                                    '2g',
+                                    '5g',
+                                    '10g',
+                                    '500mcg',
+                                    '1000IU',
+                                  ]
+                                      .map((String strength) {
+                                    return DropdownMenuItem<String>(
+                                      value: strength,
+                                      child: Text(strength),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? value) {
+                                    setState(() {
+                                      _strengthController.text = value ?? '';
+                                    });
+                                    _performSearch(
+                                      _searchController.text,
+                                      value ?? '',
+                                    );
+                                  },
                                   decoration: InputDecoration(
-                                    hintText: "e.g., 500mg",
+                                    hintText: "Select strength",
                                     prefixIcon: const Icon(
                                       Icons.tune,
                                       color: Color(0xFF2D7A4A),
-                                    ),
-                                    hintStyle: TextStyle(
-                                      color: const Color(0xFF2D7A4A)
-                                          .withOpacity(0.5),
-                                      fontSize: 14,
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 16,
@@ -337,12 +364,6 @@ class _SearchPageState extends State<SearchPage> {
                                       ),
                                     ),
                                   ),
-                                  onChanged: (value) {
-                                    _performSearch(
-                                      _searchController.text,
-                                      _strengthController.text,
-                                    );
-                                  },
                                 ),
                               ],
                             ),
