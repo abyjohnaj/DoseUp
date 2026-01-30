@@ -78,21 +78,27 @@ class LandingPage extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/landing');
+            },
             child: const Text(
               "Home",
               style: TextStyle(color: Color(0xFF2D7A4A), fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/search');
+            },
             child: const Text(
               "About",
               style: TextStyle(color: Color(0xFF2D7A4A), fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/compare');
+            },
             child: const Text(
               "Contact Us",
               style: TextStyle(color: Color(0xFF2D7A4A), fontSize: 14, fontWeight: FontWeight.w500),
@@ -171,7 +177,7 @@ class LandingPage extends StatelessWidget {
                           ),
                         ),
                         onPressed: () {
-                          // TODO: Navigate to Login / Dashboard
+                          Navigator.pushNamed(context, '/search');
                         },
                         child: const Text(
                           "Get Started",
@@ -197,7 +203,7 @@ class LandingPage extends StatelessWidget {
                           ),
                         ),
                         onPressed: () {
-                          // TODO: Navigate to About page
+                          Navigator.pushNamed(context, '/compare');
                         },
                         child: const Text(
                           "Learn More",
