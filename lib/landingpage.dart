@@ -177,7 +177,7 @@ class LandingPage extends StatelessWidget {
                           ),
                         ),
                         onPressed: () {
-                          Navigator.pushNamed(context, '/search');
+                          Navigator.pushNamed(context, '/auth');
                         },
                         child: const Text(
                           "Get Started",

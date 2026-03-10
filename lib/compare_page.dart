@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/price_comparison_service.dart';
 
 class ComparePage extends StatefulWidget {
   const ComparePage({super.key});
@@ -8,34 +9,35 @@ class ComparePage extends StatefulWidget {
 }
 
 class _ComparePageState extends State<ComparePage> {
-  // Sample pharmacy data
-  final List<Map<String, dynamic>> pharmacyData = [
-    {
-      'name': 'Pharmacy A',
-      'price': 250.00,
-      'savings': 50.00,
-    },
-    {
-      'name': 'Pharmacy B',
-      'price': 280.00,
-      'savings': 20.00,
-    },
-    {
-      'name': 'Pharmacy C',
-      'price': 300.00,
-      'savings': 0.00,
-    },
-    {
-      'name': 'Pharmacy D',
-      'price': 265.00,
-      'savings': 35.00,
-    },
-    {
-      'name': 'Pharmacy E',
-      'price': 290.00,
-      'savings': 10.00,
-    },
-  ];
+  final TextEditingController _medicineController = TextEditingController();
+  final PriceComparisonService _priceService = PriceComparisonService();
+  
+  PriceComparisonResult? _comparisonResult;
+  bool _isSearching = false;
+
+  void _searchPrices() async {
+    if (_medicineController.text.isEmpty) return;
+
+    setState(() {
+      _isSearching = true;
+    });
+
+    // Simulate network delay
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    final result = _priceService.comparePrices(_medicineController.text);
+
+    setState(() {
+      _comparisonResult = result;
+      _isSearching = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _medicineController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,8 +174,179 @@ class _ComparePageState extends State<ComparePage> {
                       color: const Color(0xFF2D7A4A).withOpacity(0.4),
                     ),
                     const SizedBox(height: 50),
-                    // Comparison Table
-                    _buildComparisonTable(),
+                    // Search Bar
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 400,
+                          child: TextField(
+                            controller: _medicineController,
+                            decoration: InputDecoration(
+                              hintText: "Enter medicine name (e.g., Paracetamol, Aspirin, Ibuprofen, Metformin)...",
+                              hintStyle: TextStyle(
+                                color: const Color(0xFF2D7A4A)
+                                    .withOpacity(0.5),
+                                fontSize: 14,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: const Color(0xFF2D7A4A)
+                                      .withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: const Color(0xFF2D7A4A)
+                                      .withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2D7A4A),
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            onSubmitted: (_) => _searchPrices(),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.search),
+                          label: const Text("Search"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2D7A4A),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: _searchPrices,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 50),
+                    // Results
+                    if (_isSearching)
+                      const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(
+                            Color(0xFF2D7A4A),
+                          ),
+                        ),
+                      )
+                    else if (_comparisonResult == null)
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: const Color(0xFF2D7A4A).withOpacity(0.3),
+                            width: 1.5,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          color: const Color(0xFF2D7A4A).withOpacity(0.05),
+                        ),
+                        child: const Text(
+                          "Enter a medicine name and click Search to compare prices",
+                          style: TextStyle(
+                            color: Color(0xFF2D7A4A),
+                            fontSize: 16,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      )
+                    else if (!_comparisonResult!.found)
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.red.withOpacity(0.3),
+                            width: 1.5,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.red.withOpacity(0.05),
+                        ),
+                        child: Text(
+                          _comparisonResult!.message,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Summary Info
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: const Color(0xFF2D7A4A).withOpacity(0.4),
+                                width: 1.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              color: const Color(0xFF2D7A4A).withOpacity(0.05),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _comparisonResult!.message,
+                                  style: const TextStyle(
+                                    color: Color(0xFF2D7A4A),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildSummaryCard(
+                                      title: "Cheapest",
+                                      shop: _comparisonResult!.cheapest!.shopName,
+                                      price: _comparisonResult!.cheapest!.price,
+                                    ),
+                                    _buildSummaryCard(
+                                      title: "Most Expensive",
+                                      shop: _comparisonResult!
+                                          .costliest!.shopName,
+                                      price: _comparisonResult!
+                                          .costliest!.price,
+                                    ),
+                                    _buildSummaryCard(
+                                      title: "Average Price",
+                                      shop: "All Shops",
+                                      price: _comparisonResult!
+                                          .averagePrice!,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                          // Comparison Table
+                          _buildComparisonTable(),
+                        ],
+                      ),
                   ],
                 ),
               ),
@@ -185,6 +358,13 @@ class _ComparePageState extends State<ComparePage> {
   }
 
   Widget _buildComparisonTable() {
+    if (_comparisonResult == null || !_comparisonResult!.found) {
+      return const SizedBox.shrink();
+    }
+
+    final pricesList = _comparisonResult!.allPrices;
+    final cheapestPrice = _comparisonResult!.cheapest!.price;
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
@@ -209,7 +389,7 @@ class _ComparePageState extends State<ComparePage> {
                 Expanded(
                   flex: 1,
                   child: _buildTableCell(
-                    "Pharmacy",
+                    "Shop Name",
                     isHeader: true,
                   ),
                 ),
@@ -242,14 +422,17 @@ class _ComparePageState extends State<ComparePage> {
           ),
           // Data Rows
           ...List.generate(
-            pharmacyData.length,
+            pricesList.length,
             (index) {
-              final data = pharmacyData[index];
-              final isLowest = index == 0; // Highlight lowest price
+              final record = pricesList[index];
+              final isCheapest = record.price == cheapestPrice;
+              final savings = cheapestPrice > 0
+                  ? record.price - cheapestPrice
+                  : 0.0;
 
               return Container(
                 decoration: BoxDecoration(
-                  color: isLowest
+                  color: isCheapest
                       ? const Color(0xFF2D7A4A).withOpacity(0.05)
                       : Colors.transparent,
                   border: Border(
@@ -264,7 +447,7 @@ class _ComparePageState extends State<ComparePage> {
                     Expanded(
                       flex: 1,
                       child: _buildTableCell(
-                        data['name'],
+                        record.shopName,
                         isHeader: false,
                       ),
                     ),
@@ -276,7 +459,7 @@ class _ComparePageState extends State<ComparePage> {
                     Expanded(
                       flex: 1,
                       child: _buildTableCell(
-                        "₹${data['price'].toStringAsFixed(2)}",
+                        "₹${record.price.toStringAsFixed(2)}",
                         isHeader: false,
                       ),
                     ),
@@ -299,13 +482,15 @@ class _ComparePageState extends State<ComparePage> {
                               width: double.infinity,
                               height: 24,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2D7A4A)
-                                    .withOpacity(0.6),
+                                color: isCheapest
+                                    ? Colors.green.withOpacity(0.7)
+                                    : const Color(0xFF2D7A4A)
+                                        .withOpacity(0.6),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Center(
                                 child: Text(
-                                  "₹${data['savings'].toStringAsFixed(2)}",
+                                  "₹${savings.abs().toStringAsFixed(2)}",
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,
@@ -322,6 +507,57 @@ class _ComparePageState extends State<ComparePage> {
                 ),
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard({
+    required String title,
+    required String shop,
+    required double price,
+  }) {
+    return Container(
+      width: 200,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: const Color(0xFF2D7A4A).withOpacity(0.3),
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF2D7A4A),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "₹${price.toStringAsFixed(2)}",
+            style: const TextStyle(
+              color: Color(0xFF2D7A4A),
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            shop,
+            style: const TextStyle(
+              color: Color(0xFF2D7A4A),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ),

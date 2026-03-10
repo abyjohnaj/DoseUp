@@ -1,4 +1,5 @@
 import 'package:doseup/landingpage.dart';
+import 'package:doseup/auth_page.dart';
 import 'package:doseup/search_page.dart';
 import 'package:doseup/compare_page.dart';
 import 'package:doseup/shortage_report_page.dart';
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
       home: const LandingPage(),
       routes: {
         '/landing': (context) => const LandingPage(),
+        '/auth': (context) => const AuthPage(),
         '/search': (context) => const SearchPage(),
         '/compare': (context) => const ComparePage(),
         '/shortage': (context) => const ShortageReportPage(),
