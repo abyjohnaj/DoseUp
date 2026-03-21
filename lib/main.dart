@@ -6,6 +6,7 @@ import 'package:doseup/pages/dashboard_page.dart';
 import 'package:doseup/pages/landingpage.dart';
 import 'package:doseup/pages/prescription_page.dart';
 import 'package:doseup/pages/search_page.dart';
+import 'package:doseup/pages/forum_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
         '/dashboard': (context) => const DashboardPage(),
         '/search': (context) => const SearchPage(),
         '/prescription': (context) => const PrescriptionPage(),
+        '/forum': (context) => const ForumPage(),
       },
     );
   }

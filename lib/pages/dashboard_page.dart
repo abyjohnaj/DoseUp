@@ -10,13 +10,11 @@ class DashboardPage extends StatelessWidget {
         title: const Text("DoseUp Dashboard"),
         centerTitle: false,
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Text
             const Text(
               "Welcome to DoseUp 👋",
               style: TextStyle(
@@ -24,9 +22,7 @@ class DashboardPage extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 8),
-
             const Text(
               "Compare medicine prices, find generic alternatives, and check availability.",
               style: TextStyle(
@@ -34,13 +30,10 @@ class DashboardPage extends StatelessWidget {
                 color: Colors.black54,
               ),
             ),
-
             const SizedBox(height: 32),
-
-            // Action Cards
             Expanded(
               child: GridView.count(
-                crossAxisCount: 2, // 2 cards per row (perfect for web)
+                crossAxisCount: 2,
                 crossAxisSpacing: 20,
                 mainAxisSpacing: 20,
                 childAspectRatio: 1.6,
@@ -52,6 +45,8 @@ class DashboardPage extends StatelessWidget {
                     subtitle: "Find medicines quickly",
                     route: '/search',
                   ),
+                  // FIX: '/compare' had no registered route — added a guard so it
+                  // shows a "coming soon" snackbar instead of crashing.
                   dashboardCard(
                     context,
                     icon: Icons.compare,
@@ -59,6 +54,7 @@ class DashboardPage extends StatelessWidget {
                     subtitle: "Find cheaper alternatives",
                     route: '/compare',
                   ),
+                  // FIX: Same fix applied to '/availability'
                   dashboardCard(
                     context,
                     icon: Icons.store,
@@ -75,10 +71,17 @@ class DashboardPage extends StatelessWidget {
                   ),
                   dashboardCard(
                     context,
-                    icon: Icons.search,
-                    title: "🧾 Prescription Reader",
-                    subtitle: "Read Prescriptions easily",
+                    icon: Icons.receipt_long,
+                    title: "Prescription Reader",
+                    subtitle: "Read prescriptions easily",
                     route: '/prescription',
+                  ),
+                  dashboardCard(
+                    context,
+                    icon: Icons.forum,
+                    title: "Community Forum",
+                    subtitle: "Discuss medicines & shortages",
+                    route: '/forum',
                   ),
                 ],
               ),
@@ -89,7 +92,6 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // Reusable Dashboard Card Widget
   Widget dashboardCard(
     BuildContext context, {
     required IconData icon,
@@ -97,9 +99,20 @@ class DashboardPage extends StatelessWidget {
     required String subtitle,
     required String route,
   }) {
+    // FIX: Defined routes that exist in the app ('/search', '/prescription',
+    // '/forum'). For routes not yet built ('/compare', '/availability',
+    // '/assistant'), show a friendly snackbar instead of a crash.
+    const builtRoutes = {'/search', '/prescription', '/forum', '/dashboard'};
+
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, route);
+        if (builtRoutes.contains(route)) {
+          Navigator.pushNamed(context, route);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("$title — coming soon!")),
+          );
+        }
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -111,11 +124,7 @@ class DashboardPage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 48,
-              color: Colors.blue,
-            ),
+            Icon(icon, size: 48, color: Colors.blue),
             const SizedBox(width: 20),
             Expanded(
               child: Column(

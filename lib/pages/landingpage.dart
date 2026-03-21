@@ -1,4 +1,6 @@
 import 'package:doseup/pages/dashboard_page.dart';
+import 'package:doseup/pages/forum_page.dart';
+import 'package:doseup/pages/login_page.dart';
 import 'package:doseup/pages/register_page.dart';
 import 'package:flutter/material.dart';
 
@@ -216,7 +218,7 @@ class LandingPage extends StatelessWidget {
                             context,
                             MaterialPageRoute<void>(
                               builder: (context) =>
-                                  const RegisterPage(),
+                                  const LoginPage(),
                             ),
                           );
                         },
