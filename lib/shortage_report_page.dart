@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/shop_data_service.dart';
 
 class ShortageReportPage extends StatefulWidget {
   const ShortageReportPage({super.key});
@@ -10,20 +11,15 @@ class ShortageReportPage extends StatefulWidget {
 class _ShortageReportPageState extends State<ShortageReportPage> {
   final TextEditingController _medicineController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
+  final ShopDataService _shopDataService = ShopDataService();
   String? _selectedLocation;
+  late List<String> locations;
 
-  final List<String> locations = [
-    'New York',
-    'Los Angeles',
-    'Chicago',
-    'Houston',
-    'Phoenix',
-    'Philadelphia',
-    'San Antonio',
-    'San Diego',
-    'Dallas',
-    'San Jose',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    locations = _shopDataService.getAllLocations();
+  }
 
   void _submitReport() {
     if (_medicineController.text.isEmpty ||
@@ -38,12 +34,22 @@ class _ShortageReportPageState extends State<ShortageReportPage> {
       return;
     }
 
+    // Get shortage report data
+    final report = _shopDataService.getShortageReport(
+      _medicineController.text,
+      location: _selectedLocation,
+    );
+
+    String shortageMessage = report['availableCount'] == 0
+        ? 'Medicine "${_medicineController.text}" is currently unavailable in $_selectedLocation'
+        : 'Shortage report for "${_medicineController.text}" in $_selectedLocation submitted successfully!\n'
+            'Available in ${report['availableCount']} shop(s), Unavailable in ${report['unavailableCount']} shop(s)';
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          'Shortage report for ${_medicineController.text} in $_selectedLocation submitted successfully!',
-        ),
+        content: Text(shortageMessage),
         backgroundColor: const Color(0xFF2D7A4A),
+        duration: const Duration(seconds: 4),
       ),
     );
 

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'services/price_comparison_service.dart';
 
 class ComparePage extends StatefulWidget {
-  const ComparePage({super.key});
+  final String? medicineName;
+  const ComparePage({super.key, this.medicineName});
 
   @override
   State<ComparePage> createState() => _ComparePageState();
@@ -14,6 +15,15 @@ class _ComparePageState extends State<ComparePage> {
   
   PriceComparisonResult? _comparisonResult;
   bool _isSearching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.medicineName != null) {
+      _medicineController.text = widget.medicineName!;
+      _searchPrices();
+    }
+  }
 
   void _searchPrices() async {
     if (_medicineController.text.isEmpty) return;
@@ -142,7 +152,7 @@ class _ComparePageState extends State<ComparePage> {
                   icon: Icons.warning_amber_rounded,
                   label: "Shortage\nReports",
                   onTap: () {
-                    Navigator.pushNamed(context, '/compare');
+                    Navigator.pushNamed(context, '/shortage');
                   },
                 ),
               ],
@@ -174,72 +184,77 @@ class _ComparePageState extends State<ComparePage> {
                       color: const Color(0xFF2D7A4A).withOpacity(0.4),
                     ),
                     const SizedBox(height: 50),
-                    // Search Bar
-                    Row(
+                    // Search and Filter Section
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          width: 400,
-                          child: TextField(
-                            controller: _medicineController,
-                            decoration: InputDecoration(
-                              hintText: "Enter medicine name (e.g., Paracetamol, Aspirin, Ibuprofen, Metformin)...",
-                              hintStyle: TextStyle(
-                                color: const Color(0xFF2D7A4A)
-                                    .withOpacity(0.5),
-                                fontSize: 14,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: const Color(0xFF2D7A4A)
-                                      .withOpacity(0.3),
-                                  width: 1.5,
+                        // Medicine Search
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 400,
+                              child: TextField(
+                                controller: _medicineController,
+                                decoration: InputDecoration(
+                                  hintText: "Enter medicine name (e.g., Paracetamol, Insulin, Metformin)...",
+                                  hintStyle: TextStyle(
+                                    color: const Color(0xFF2D7A4A)
+                                        .withOpacity(0.5),
+                                    fontSize: 14,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: const Color(0xFF2D7A4A)
+                                          .withOpacity(0.3),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: const Color(0xFF2D7A4A)
+                                          .withOpacity(0.3),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF2D7A4A),
+                                      width: 2,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: const Color(0xFF2D7A4A)
-                                      .withOpacity(0.3),
-                                  width: 1.5,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF2D7A4A),
-                                  width: 2,
-                                ),
+                                onSubmitted: (_) => _searchPrices(),
                               ),
                             ),
-                            onSubmitted: (_) => _searchPrices(),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.search),
-                          label: const Text("Search"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2D7A4A),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
+                            const SizedBox(width: 16),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.search),
+                              label: const Text("Search"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2D7A4A),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: _searchPrices,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: _searchPrices,
+                          ],
                         ),
                       ],
                     ),
                     const SizedBox(height: 50),
-                    // Results
                     if (_isSearching)
                       const Center(
                         child: CircularProgressIndicator(

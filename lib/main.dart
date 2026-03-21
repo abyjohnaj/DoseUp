@@ -27,7 +27,10 @@ class MyApp extends StatelessWidget {
         '/landing': (context) => const LandingPage(),
         '/auth': (context) => const AuthPage(),
         '/search': (context) => const SearchPage(),
-        '/compare': (context) => const ComparePage(),
+        '/compare': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as String?;
+          return ComparePage(medicineName: args);
+        },
         '/shortage': (context) => const ShortageReportPage(),
         '/chatbot': (context) => const ChatbotPage(),
         '/prescription': (context) => const PrescriptionReaderPage(),

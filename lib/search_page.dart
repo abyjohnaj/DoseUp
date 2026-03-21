@@ -120,7 +120,7 @@ class _SearchPageState extends State<SearchPage> {
           ),
           TextButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/compare');
+              Navigator.pushNamed(context, '/shortage');
             },
             child: const Text(
               "Reports",
@@ -168,7 +168,7 @@ class _SearchPageState extends State<SearchPage> {
                   icon: Icons.warning_amber_rounded,
                   label: "Shortage\nReports",
                   onTap: () {
-                    Navigator.pushNamed(context, '/compare');
+                    Navigator.pushNamed(context, '/shortage');
                   },
                 ),
                 _buildSidebarItem(
@@ -436,6 +436,7 @@ class _SearchPageState extends State<SearchPage> {
                                             Navigator.pushNamed(
                                               context,
                                               '/compare',
+                                              arguments: displayedMedicines[index],
                                             );
                                           },
                                         ),

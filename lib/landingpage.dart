@@ -104,6 +104,15 @@ class LandingPage extends StatelessWidget {
               style: TextStyle(color: Color(0xFF2D7A4A), fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),
+          TextButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/auth');
+            },
+            child: const Text(
+              "Login",
+              style: TextStyle(color: Color(0xFF2D7A4A), fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ),
           const SizedBox(width: 16),
         ],
       ),
@@ -177,7 +186,7 @@ class LandingPage extends StatelessWidget {
                           ),
                         ),
                         onPressed: () {
-                          Navigator.pushNamed(context, '/auth');
+                          Navigator.pushNamed(context, '/compare');
                         },
                         child: const Text(
                           "Get Started",
