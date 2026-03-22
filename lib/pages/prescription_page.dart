@@ -17,24 +17,19 @@ class _PrescriptionPageState extends State<PrescriptionPage> {
   String _loadingStep = "";
   String? _errorMessage;
 
-  // ── Image Picker ───────────────────────────────────────────────────────────
-
   Future<void> pickImage() async {
     final picker = ImagePicker();
-    // On Flutter Web, gallery opens the OS file picker
     final XFile? file = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 90,
     );
     if (file == null) return;
-
     final bytes = await file.readAsBytes();
     setState(() {
       _imageBytes = bytes;
       _result = null;
       _errorMessage = null;
     });
-
     await _processImage(bytes);
   }
 
@@ -44,15 +39,11 @@ class _PrescriptionPageState extends State<PrescriptionPage> {
       _loadingStep = "Uploading image...";
       _errorMessage = null;
     });
-
     try {
       setState(() => _loadingStep = "Reading text with Tesseract OCR...");
-      // Small delay so user sees the step message
       await Future.delayed(const Duration(milliseconds: 300));
-
       setState(() => _loadingStep = "Analysing with Ollama AI...");
       final result = await PrescriptionService.extractPrescription(bytes);
-
       if (mounted) {
         setState(() {
           _result = result;
@@ -78,8 +69,6 @@ class _PrescriptionPageState extends State<PrescriptionPage> {
     });
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,7 +85,8 @@ class _PrescriptionPageState extends State<PrescriptionPage> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text("New Scan"),
               style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF2D7A4A)),
+                foregroundColor: const Color(0xFF2D7A4A),
+              ),
             ),
         ],
       ),
@@ -108,169 +98,199 @@ class _PrescriptionPageState extends State<PrescriptionPage> {
     );
   }
 
-  // ── Upload View ────────────────────────────────────────────────────────────
+  // ── Upload View ──────────────────────────────────────────────────────────────
 
   Widget _buildUploadView() {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF7F2),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                      color: const Color(0xFF2D7A4A).withOpacity(0.3),
-                      width: 2),
-                ),
-                child: const Icon(Icons.document_scanner_outlined,
-                    size: 56, color: Color(0xFF2D7A4A)),
-              ),
-
-              const SizedBox(height: 28),
-
-              const Text(
-                "Read Your Prescription",
-                style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                "Upload a photo of your prescription.\nTesseract reads the text, then AI structures it for you.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 14, color: Colors.black45, height: 1.6),
-              ),
-
-              const SizedBox(height: 36),
-
-              // Drag & drop area
-              GestureDetector(
-                onTap: pickImage,
-                child: Container(
-                  width: double.infinity,
-                  height: 140,
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon
+                Container(
+                  width: 120,
+                  height: 120,
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF7F2),
-                    borderRadius: BorderRadius.circular(12),
+                    shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF2D7A4A).withOpacity(0.4),
-                      width: 1.5,
+                      color: const Color(0xFF2D7A4A).withOpacity(0.3),
+                      width: 2,
                     ),
                   ),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.cloud_upload_outlined,
-                          size: 40, color: Color(0xFF2D7A4A)),
-                      SizedBox(height: 8),
-                      Text("Click to upload image",
-                          style: TextStyle(
-                              color: Color(0xFF2D7A4A),
-                              fontWeight: FontWeight.w500)),
-                      SizedBox(height: 4),
-                      Text("JPG, PNG supported",
-                          style: TextStyle(
-                              color: Colors.black38, fontSize: 12)),
-                    ],
+                  child: const Icon(
+                    Icons.document_scanner_outlined,
+                    size: 56,
+                    color: Color(0xFF2D7A4A),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 28),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: pickImage,
-                  icon: const Icon(Icons.upload_file, size: 20),
-                  label: const Text("Upload Prescription",
-                      style: TextStyle(fontSize: 16)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2D7A4A),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                const Text(
+                  "Read Your Prescription",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
                   ),
                 ),
-              ),
 
-              if (_errorMessage != null) ...[
+                const SizedBox(height: 10),
+
+                const Text(
+                  "Upload a photo of your prescription.\nTesseract reads the text, then AI structures it for you.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black45,
+                    height: 1.6,
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Upload area
+                GestureDetector(
+                  onTap: pickImage,
+                  child: Container(
+                    width: double.infinity,
+                    height: 130,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF7F2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF2D7A4A).withOpacity(0.4),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.cloud_upload_outlined,
+                          size: 36,
+                          color: Color(0xFF2D7A4A),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "Click to upload image",
+                          style: TextStyle(
+                            color: Color(0xFF2D7A4A),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          "JPG, PNG supported",
+                          style: TextStyle(
+                            color: Colors.black38,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Upload button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: pickImage,
+                    icon: const Icon(Icons.upload_file, size: 20),
+                    label: const Text(
+                      "Upload Prescription",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2D7A4A),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 16),
+                  _ErrorBanner(message: _errorMessage!),
+                ],
+
                 const SizedBox(height: 20),
-                _ErrorBanner(message: _errorMessage!),
+                const _Disclaimer(),
               ],
-
-              const SizedBox(height: 24),
-              const _Disclaimer(),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // ── Loading View ───────────────────────────────────────────────────────────
+  // ── Loading View ─────────────────────────────────────────────────────────────
 
   Widget _buildLoadingView() {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (_imageBytes != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.memory(_imageBytes!,
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_imageBytes != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.memory(
+                      _imageBytes!,
                       height: 200,
                       width: double.infinity,
-                      fit: BoxFit.cover),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+
+                const SizedBox(height: 32),
+
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2D7A4A)),
+                  strokeWidth: 3,
                 ),
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2D7A4A)),
-                strokeWidth: 3,
-              ),
-
-              const SizedBox(height: 20),
-
-              Text(
-                _loadingStep,
-                style: const TextStyle(
+                Text(
+                  _loadingStep,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black54),
-              ),
+                    color: Colors.black54,
+                  ),
+                ),
 
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-              const Text(
-                "This may take 20–40 seconds",
-                style: TextStyle(fontSize: 12, color: Colors.black38),
-              ),
-            ],
+                const Text(
+                  "This may take 20–40 seconds",
+                  style: TextStyle(fontSize: 12, color: Colors.black38),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // ── Result View ────────────────────────────────────────────────────────────
+  // ── Result View ──────────────────────────────────────────────────────────────
 
   Widget _buildResultView() {
     final medicine = _result!['medicine'] as String;
@@ -285,33 +305,38 @@ class _PrescriptionPageState extends State<PrescriptionPage> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 620),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image thumbnail
               if (_imageBytes != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.memory(_imageBytes!,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover),
+                  child: Image.memory(
+                    _imageBytes!,
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
 
               const SizedBox(height: 16),
 
-              // ── Typed Prescription Card ──────────────────────────────────
+              // Prescription card
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                      color: const Color(0xFF2D7A4A).withOpacity(0.25)),
+                    color: const Color(0xFF2D7A4A).withOpacity(0.25),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3))
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
                   ],
                 ),
                 child: Column(
@@ -321,24 +346,32 @@ class _PrescriptionPageState extends State<PrescriptionPage> {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 14),
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
                       decoration: const BoxDecoration(
                         color: Color(0xFF2D7A4A),
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(16)),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(16),
+                        ),
                       ),
-                      child: const Row(children: [
-                        Icon(Icons.medication,
-                            color: Colors.white, size: 22),
-                        SizedBox(width: 10),
-                        Text("Prescription Details",
+                      child: const Row(
+                        children: [
+                          Icon(Icons.medication, color: Colors.white, size: 22),
+                          SizedBox(width: 10),
+                          Text(
+                            "Prescription Details",
                             style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600)),
-                      ]),
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
+                    // Fields
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: Column(
@@ -351,33 +384,31 @@ class _PrescriptionPageState extends State<PrescriptionPage> {
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF1A1A1A),
                           ),
-
                           const _DottedDivider(),
-
-                          Row(children: [
-                            Expanded(
-                              child: _TypedField(
-                                label: "Strength",
-                                value: strength,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF2D7A4A),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _TypedField(
+                                  label: "Strength",
+                                  value: strength,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF2D7A4A),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _TypedField(
-                                label: "Form",
-                                value: form,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _TypedField(
+                                  label: "Form",
+                                  value: form,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
                               ),
-                            ),
-                          ]),
-
+                            ],
+                          ),
                           const _DottedDivider(),
-
                           _TypedField(
                             label: "Frequency / Dosage",
                             value: frequency,
@@ -399,37 +430,42 @@ class _PrescriptionPageState extends State<PrescriptionPage> {
 
               const SizedBox(height: 16),
 
-              Row(children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: pickImage,
-                    icon: const Icon(Icons.upload_file, size: 18),
-                    label: const Text("Upload New"),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF2D7A4A),
-                      side: const BorderSide(color: Color(0xFF2D7A4A)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: pickImage,
+                      icon: const Icon(Icons.upload_file, size: 18),
+                      label: const Text("Upload New"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF2D7A4A),
+                        side: const BorderSide(color: Color(0xFF2D7A4A)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _reset,
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text("Reset"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2D7A4A),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _reset,
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text("Reset"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2D7A4A),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ]),
+                ],
+              ),
 
               const SizedBox(height: 16),
               const _Disclaimer(),
@@ -467,31 +503,36 @@ class _TypedField extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(),
-              style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black38,
-                  letterSpacing: 1.2)),
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: Colors.black38,
+              letterSpacing: 1.2,
+            ),
+          ),
           const SizedBox(height: 4),
-          Row(children: [
-            if (icon != null) ...[
-              Icon(icon, size: fontSize * 0.8, color: color),
-              const SizedBox(width: 6),
-            ],
-            Expanded(
-              child: Text(
-                value.isNotEmpty ? value : "—",
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: fontWeight,
-                  color: value.isNotEmpty ? color : Colors.black26,
-                  letterSpacing: 0.3,
-                  height: 1.2,
+          Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: fontSize * 0.8, color: color),
+                const SizedBox(width: 6),
+              ],
+              Expanded(
+                child: Text(
+                  value.isNotEmpty ? value : "—",
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: fontWeight,
+                    color: value.isNotEmpty ? color : Colors.black26,
+                    letterSpacing: 0.3,
+                    height: 1.2,
+                  ),
                 ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ],
       ),
     );
@@ -545,33 +586,46 @@ class _OcrTextSectionState extends State<_OcrTextSection> {
             onTap: () => setState(() => _expanded = !_expanded),
             borderRadius: BorderRadius.circular(10),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12),
-              child: Row(children: [
-                const Icon(Icons.text_snippet_outlined,
-                    size: 18, color: Colors.black45),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text("Raw OCR Text",
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.text_snippet_outlined,
+                    size: 18,
+                    color: Colors.black45,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      "Raw OCR Text",
                       style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black54)),
-                ),
-                Icon(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
+                  Icon(
                     _expanded
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
-                    color: Colors.black38),
-              ]),
+                    color: Colors.black38,
+                  ),
+                ],
+              ),
             ),
           ),
           if (_expanded)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              child: Text(widget.ocrText,
-                  style: const TextStyle(
-                      fontSize: 12, color: Colors.black45, height: 1.6)),
+              child: Text(
+                widget.ocrText,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.black45,
+                  height: 1.6,
+                ),
+              ),
             ),
         ],
       ),
@@ -593,13 +647,19 @@ class _ErrorBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.red.shade200),
       ),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Icon(Icons.error_outline, color: Colors.red, size: 18),
-        const SizedBox(width: 8),
-        Expanded(
-            child: Text(message,
-                style: const TextStyle(color: Colors.red, fontSize: 13))),
-      ]),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
