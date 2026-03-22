@@ -1,3 +1,4 @@
+import 'package:doseup/pages/login_page.dart';
 import 'package:doseup/pages/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
       ),
       home: LandingPage(),
       routes: {
+        '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/dashboard': (context) => const DashboardPage(),
         '/search': (context) => const SearchPage(),

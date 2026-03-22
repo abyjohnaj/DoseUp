@@ -9,8 +9,8 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<String> searchResults = [];
-  bool _showResults = false;
+  final TextEditingController _strengthController = TextEditingController();
+  List<String> displayedMedicines = [];
 
   // Sample medicine data
   final List<String> allMedicines = [
@@ -24,21 +24,35 @@ class _SearchPageState extends State<SearchPage> {
     'Omeprazole 20mg',
     'Cetirizine 10mg',
     'Loratadine 10mg',
+    'Metoprolol 50mg',
+    'Amlodipine 5mg',
+    'Vitamin D3 1000IU',
+    'Vitamin B12 500mcg',
   ];
 
-  void _performSearch(String query) {
-    if (query.isEmpty) {
+  @override
+  void initState() {
+    super.initState();
+    // Show all medicines by default
+    displayedMedicines = allMedicines;
+  }
+
+  void _performSearch(String medicineName, String strength) {
+    if (medicineName.isEmpty && strength.isEmpty) {
       setState(() {
-        searchResults = [];
-        _showResults = false;
+        displayedMedicines = allMedicines;
       });
     } else {
       setState(() {
-        searchResults = allMedicines
-            .where((medicine) =>
-                medicine.toLowerCase().contains(query.toLowerCase()))
+        displayedMedicines = allMedicines
+            .where((medicine) {
+              bool matchesMedicine = medicineName.isEmpty ||
+                  medicine.toLowerCase().contains(medicineName.toLowerCase());
+              bool matchesStrength = strength.isEmpty ||
+                  medicine.toLowerCase().contains(strength.toLowerCase());
+              return matchesMedicine && matchesStrength;
+            })
             .toList();
-        _showResults = true;
       });
     }
   }
@@ -46,6 +60,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _strengthController.dispose();
     super.dispose();
   }
 
@@ -80,7 +95,9 @@ class _SearchPageState extends State<SearchPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/landing');
+            },
             child: const Text(
               "Dashboard",
               style: TextStyle(
@@ -90,7 +107,9 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/search');
+            },
             child: const Text(
               "Search",
               style: TextStyle(
@@ -100,7 +119,9 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/shortage');
+            },
             child: const Text(
               "Reports",
               style: TextStyle(
@@ -131,214 +152,329 @@ class _SearchPageState extends State<SearchPage> {
                 _buildSidebarItem(
                   icon: Icons.dashboard,
                   label: "Dashboard",
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushNamed(context, '/landing');
+                  },
                 ),
                 _buildSidebarItem(
                   icon: Icons.search,
                   label: "Search",
                   isActive: true,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushNamed(context, '/search');
+                  },
                 ),
                 _buildSidebarItem(
                   icon: Icons.warning_amber_rounded,
                   label: "Shortage\nReports",
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushNamed(context, '/shortage');
+                  },
+                ),
+                _buildSidebarItem(
+                  icon: Icons.chat_rounded,
+                  label: "AI Assistant",
+                  onTap: () {
+                    Navigator.pushNamed(context, '/chatbot');
+                  },
+                ),
+                _buildSidebarItem(
+                  icon: Icons.document_scanner,
+                  label: "Prescription\nReader",
+                  onTap: () {
+                    Navigator.pushNamed(context, '/prescription');
+                  },
                 ),
               ],
             ),
           ),
           // Main Content
           Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    const Text(
-                      "Search Medications",
-                      style: TextStyle(
-                        color: Color(0xFF2D7A4A),
-                        fontSize: 36,
-                        fontWeight: FontWeight.w600,
-                        fontStyle: FontStyle.italic,
-                        letterSpacing: 0.5,
+            child: Column(
+              children: [
+                // Search Bar Section - Fixed at Top
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Search Medications",
+                        style: TextStyle(
+                          color: Color(0xFF2D7A4A),
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 40),
-                    // Search Bar
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: "Enter medicine name...",
-                              hintStyle: TextStyle(
-                                color: const Color(0xFF2D7A4A).withOpacity(0.5),
-                                fontSize: 16,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 16,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(4),
-                                borderSide: BorderSide(
-                                  color: const Color(0xFF2D7A4A).withOpacity(0.3),
-                                  width: 1.5,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(4),
-                                borderSide: BorderSide(
-                                  color: const Color(0xFF2D7A4A).withOpacity(0.3),
-                                  width: 1.5,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(4),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF2D7A4A),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            onChanged: _performSearch,
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2D7A4A),
-                            foregroundColor: Colors.white,
-                            elevation: 4,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
-                              vertical: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          onPressed: () => _performSearch(_searchController.text),
-                          child: const Text(
-                            "Search",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 60),
-                    // Search Results Section
-                    if (_showResults)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 16),
+                      Row(
                         children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: const Color(0xFF2D7A4A).withOpacity(0.4),
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                            child: const Text(
-                              "Search Results",
-                              style: TextStyle(
-                                color: Color(0xFF2D7A4A),
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ),
-                          if (searchResults.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 30,
-                              ),
-                              child: Text(
-                                "No medicines found matching '${_searchController.text}'",
-                                style: TextStyle(
-                                  color: const Color(0xFF2D7A4A).withOpacity(0.6),
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            )
-                          else
-                            Column(
-                              children: List.generate(
-                                searchResults.length,
-                                (index) => Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 16,
+                          // Medicine Name Search Box
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Medicine Name",
+                                  style: TextStyle(
+                                    color: Color(0xFF2D7A4A),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
                                   ),
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _searchController,
+                                  decoration: InputDecoration(
+                                    hintText: "e.g., Paracetamol",
+                                    prefixIcon: const Icon(
+                                      Icons.search,
+                                      color: Color(0xFF2D7A4A),
+                                    ),
+                                    hintStyle: TextStyle(
+                                      color: const Color(0xFF2D7A4A)
+                                          .withOpacity(0.5),
+                                      fontSize: 14,
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
                                         color: const Color(0xFF2D7A4A)
-                                            .withOpacity(0.2),
-                                        width: 1,
+                                            .withOpacity(0.3),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: const Color(0xFF2D7A4A)
+                                            .withOpacity(0.3),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF2D7A4A),
+                                        width: 2,
                                       ),
                                     ),
                                   ),
-                                  child: Text(
-                                    searchResults[index],
-                                    style: const TextStyle(
+                                  onChanged: (value) {
+                                    _performSearch(
+                                      _searchController.text,
+                                      _strengthController.text,
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Strength Search Box
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Strength",
+                                  style: TextStyle(
+                                    color: Color(0xFF2D7A4A),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                DropdownButtonFormField<String>(
+                                  value: _strengthController.text.isEmpty
+                                      ? null
+                                      : _strengthController.text,
+                                  hint: const Text("Select strength"),
+                                  items: [
+                                    '5mg',
+                                    '10mg',
+                                    '20mg',
+                                    '50mg',
+                                    '100mg',
+                                    '200mg',
+                                    '250mg',
+                                    '500mg',
+                                    '1000mg',
+                                    '1g',
+                                    '2g',
+                                    '5g',
+                                    '10g',
+                                    '500mcg',
+                                    '1000IU',
+                                  ]
+                                      .map((String strength) {
+                                    return DropdownMenuItem<String>(
+                                      value: strength,
+                                      child: Text(strength),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? value) {
+                                    setState(() {
+                                      _strengthController.text = value ?? '';
+                                    });
+                                    _performSearch(
+                                      _searchController.text,
+                                      value ?? '',
+                                    );
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: "Select strength",
+                                    prefixIcon: const Icon(
+                                      Icons.tune,
                                       color: Color(0xFF2D7A4A),
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                      letterSpacing: 0.2,
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: const Color(0xFF2D7A4A)
+                                            .withOpacity(0.3),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: const Color(0xFF2D7A4A)
+                                            .withOpacity(0.3),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF2D7A4A),
+                                        width: 2,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                        ],
-                      )
-                    else if (_searchController.text.isNotEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 40,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color(0xFF2D7A4A).withOpacity(0.3),
-                            width: 1.5,
                           ),
-                        ),
-                        child: Center(
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 0, thickness: 1),
+                // Scrollable Medicines List
+                Expanded(
+                  child: displayedMedicines.isEmpty
+                      ? Center(
                           child: Text(
-                            "No results for '${_searchController.text}'",
+                            _searchController.text.isEmpty
+                                ? "No medicines available"
+                                : "No medicines found",
                             style: TextStyle(
                               color: const Color(0xFF2D7A4A).withOpacity(0.6),
                               fontSize: 16,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: displayedMedicines.length,
+                          separatorBuilder: (context, index) => Divider(
+                            height: 1,
+                            color: const Color(0xFF2D7A4A).withOpacity(0.2),
+                          ),
+                          itemBuilder: (context, index) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 16,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    displayedMedicines[index],
+                                    style: const TextStyle(
+                                      color: Color(0xFF2D7A4A),
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          icon: const Icon(Icons.compare_arrows),
+                                          label: const Text("Compare Price"),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xFF2D7A4A),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.pushNamed(
+                                              context,
+                                              '/compare',
+                                              arguments: displayedMedicines[index],
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          icon: const Icon(Icons.warning_rounded),
+                                          label: const Text("Report Shortage"),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xFFE74C3C),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.pushNamed(
+                                              context,
+                                              '/shortage',
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                  ],
                 ),
-              ),
+              ],
             ),
           ),
         ],

@@ -15,8 +15,52 @@ class _RegisterPageState extends State<RegisterPage> {
   final passwordController = TextEditingController();
 
   String role = "user";
+  bool _isLoading = false;
 
   final auth = AuthService();
+
+  Future<void> _register() async {
+    // Basic validation
+    if (nameController.text.trim().isEmpty) {
+      _showSnack("Please enter your name");
+      return;
+    }
+    if (emailController.text.trim().isEmpty) {
+      _showSnack("Please enter your email");
+      return;
+    }
+    if (passwordController.text.length < 6) {
+      _showSnack("Password must be at least 6 characters");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await auth.signUp(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text,
+        role: role,
+      );
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnack(e.toString().replaceFirst("Exception: ", ""));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 4)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,20 +107,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
             const SizedBox(height: 25),
 
-            ElevatedButton(
-              onPressed: () async {
-
-                await auth.signUp(
-                  name: nameController.text,
-                  email: emailController.text,
-                  password: passwordController.text,
-                  role: role,
-                );
-
-                Navigator.pushReplacementNamed(context, '/dashboard');
-              },
-              child: const Text("Register"),
-            ),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _register,
+                    child: const Text("Register"),
+                  ),
             Row(
   mainAxisAlignment: MainAxisAlignment.center,
   children: [

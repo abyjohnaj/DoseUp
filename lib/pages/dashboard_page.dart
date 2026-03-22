@@ -47,28 +47,9 @@ class DashboardPage extends StatelessWidget {
                   ),
                   // FIX: '/compare' had no registered route — added a guard so it
                   // shows a "coming soon" snackbar instead of crashing.
-                  dashboardCard(
-                    context,
-                    icon: Icons.compare,
-                    title: "Compare Prices",
-                    subtitle: "Find cheaper alternatives",
-                    route: '/compare',
-                  ),
-                  // FIX: Same fix applied to '/availability'
-                  dashboardCard(
-                    context,
-                    icon: Icons.store,
-                    title: "Check Availability",
-                    subtitle: "View pharmacy availability",
-                    route: '/availability',
-                  ),
-                  dashboardCard(
-                    context,
-                    icon: Icons.smart_toy,
-                    title: "AI Assistant",
-                    subtitle: "Get help using DoseUp",
-                    route: '/assistant',
-                  ),
+                  
+                
+                
                   dashboardCard(
                     context,
                     icon: Icons.receipt_long,
@@ -82,6 +63,13 @@ class DashboardPage extends StatelessWidget {
                     title: "Community Forum",
                     subtitle: "Discuss medicines & shortages",
                     route: '/forum',
+                  ),
+                    dashboardCard(
+                    context,
+                    icon: Icons.smart_toy,
+                    title: "AI Assistant",
+                    subtitle: "Get help using DoseUp",
+                    route: '/assistant',
                   ),
                 ],
               ),
