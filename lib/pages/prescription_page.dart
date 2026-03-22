@@ -11,337 +11,621 @@ class PrescriptionPage extends StatefulWidget {
 }
 
 class _PrescriptionPageState extends State<PrescriptionPage> {
-  Uint8List? imageBytes;
-  Map<String, dynamic>? result;
-  bool isLoading = false;
-  String? errorMessage;
+  Uint8List? _imageBytes;
+  Map<String, dynamic>? _result;
+  bool _isLoading = false;
+  String _loadingStep = "";
+  String? _errorMessage;
+
+  // ── Image Picker ───────────────────────────────────────────────────────────
 
   Future<void> pickImage() async {
     final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+    // On Flutter Web, gallery opens the OS file picker
+    final XFile? file = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
+    if (file == null) return;
 
-    if (file != null) {
-      final bytes = await file.readAsBytes();
-      setState(() {
-        imageBytes = bytes;
-        result = null;     // clear previous result on new image
-        errorMessage = null;
-      });
-    }
+    final bytes = await file.readAsBytes();
+    setState(() {
+      _imageBytes = bytes;
+      _result = null;
+      _errorMessage = null;
+    });
+
+    await _processImage(bytes);
   }
 
-  Future<void> extractPrescription() async {
-    if (imageBytes == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please upload an image first")),
-      );
-      return;
-    }
-
+  Future<void> _processImage(Uint8List bytes) async {
     setState(() {
-      isLoading = true;
-      result = null;
-      errorMessage = null;
+      _isLoading = true;
+      _loadingStep = "Uploading image...";
+      _errorMessage = null;
     });
 
     try {
-      final data = await PrescriptionService.extractPrescription(imageBytes!);
-      setState(() {
-        result = data;
-      });
+      setState(() => _loadingStep = "Reading text with Tesseract OCR...");
+      // Small delay so user sees the step message
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      setState(() => _loadingStep = "Analysing with Ollama AI...");
+      final result = await PrescriptionService.extractPrescription(bytes);
+
+      if (mounted) {
+        setState(() {
+          _result = result;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        errorMessage = e.toString().replaceFirst("Exception: ", "");
-      });
-    } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst("Exception: ", "");
+          _isLoading = false;
+        });
+      }
     }
   }
+
+  void _reset() {
+    setState(() {
+      _imageBytes = null;
+      _result = null;
+      _errorMessage = null;
+      _isLoading = false;
+    });
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: const Text("Prescription Reader"),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 1,
+        actions: [
+          if (_result != null || _imageBytes != null)
+            TextButton.icon(
+              onPressed: _reset,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text("New Scan"),
+              style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF2D7A4A)),
+            ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: _isLoading
+          ? _buildLoadingView()
+          : _result != null
+              ? _buildResultView()
+              : _buildUploadView(),
+    );
+  }
 
-            // ── Upload section ───────────────────────────────────────────────
-            _SectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Upload Prescription",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 12),
+  // ── Upload View ────────────────────────────────────────────────────────────
 
-                  // Image preview or placeholder
-                  GestureDetector(
-                    onTap: pickImage,
-                    child: Container(
-                      width: double.infinity,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF7F2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFF2D7A4A).withOpacity(0.4),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: imageBytes != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(11),
-                              child: Image.memory(imageBytes!, fit: BoxFit.cover),
-                            )
-                          : const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_photo_alternate_outlined,
-                                    size: 48, color: Color(0xFF2D7A4A)),
-                                SizedBox(height: 8),
-                                Text("Tap to select image",
-                                    style: TextStyle(
-                                        color: Color(0xFF2D7A4A), fontSize: 14)),
-                              ],
-                            ),
+  Widget _buildUploadView() {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF7F2),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: const Color(0xFF2D7A4A).withOpacity(0.3),
+                      width: 2),
+                ),
+                child: const Icon(Icons.document_scanner_outlined,
+                    size: 56, color: Color(0xFF2D7A4A)),
+              ),
+
+              const SizedBox(height: 28),
+
+              const Text(
+                "Read Your Prescription",
+                style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87),
+              ),
+
+              const SizedBox(height: 10),
+
+              const Text(
+                "Upload a photo of your prescription.\nTesseract reads the text, then AI structures it for you.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 14, color: Colors.black45, height: 1.6),
+              ),
+
+              const SizedBox(height: 36),
+
+              // Drag & drop area
+              GestureDetector(
+                onTap: pickImage,
+                child: Container(
+                  width: double.infinity,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF7F2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF2D7A4A).withOpacity(0.4),
+                      width: 1.5,
                     ),
                   ),
-
-                  const SizedBox(height: 12),
-
-                  Row(children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: pickImage,
-                        icon: const Icon(Icons.photo_library_outlined, size: 18),
-                        label: const Text("Choose Image"),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF2D7A4A),
-                          side: const BorderSide(color: Color(0xFF2D7A4A)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: isLoading ? null : extractPrescription,
-                        icon: isLoading
-                            ? const SizedBox(
-                                width: 16, height: 16,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white))
-                            : const Icon(Icons.document_scanner_outlined, size: 18),
-                        label: Text(isLoading ? "Reading..." : "Extract"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2D7A4A),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ]),
-                ],
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cloud_upload_outlined,
+                          size: 40, color: Color(0xFF2D7A4A)),
+                      SizedBox(height: 8),
+                      Text("Click to upload image",
+                          style: TextStyle(
+                              color: Color(0xFF2D7A4A),
+                              fontWeight: FontWeight.w500)),
+                      SizedBox(height: 4),
+                      Text("JPG, PNG supported",
+                          style: TextStyle(
+                              color: Colors.black38, fontSize: 12)),
+                    ],
+                  ),
+                ),
               ),
-            ),
 
-            // ── Error ────────────────────────────────────────────────────────
-            if (errorMessage != null) ...[
               const SizedBox(height: 16),
-              Container(
+
+              SizedBox(
                 width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.red.shade200),
+                child: ElevatedButton.icon(
+                  onPressed: pickImage,
+                  icon: const Icon(Icons.upload_file, size: 20),
+                  label: const Text("Upload Prescription",
+                      style: TextStyle(fontSize: 16)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2D7A4A),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.red, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(errorMessage!,
-                          style: const TextStyle(color: Colors.red, fontSize: 13)),
-                    ),
-                  ],
+              ),
+
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 20),
+                _ErrorBanner(message: _errorMessage!),
+              ],
+
+              const SizedBox(height: 24),
+              const _Disclaimer(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Loading View ───────────────────────────────────────────────────────────
+
+  Widget _buildLoadingView() {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_imageBytes != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.memory(_imageBytes!,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover),
                 ),
+
+              const SizedBox(height: 32),
+
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2D7A4A)),
+                strokeWidth: 3,
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                _loadingStep,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54),
+              ),
+
+              const SizedBox(height: 8),
+
+              const Text(
+                "This may take 20–40 seconds",
+                style: TextStyle(fontSize: 12, color: Colors.black38),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
 
-            // ── Results ──────────────────────────────────────────────────────
-            if (result != null) ...[
+  // ── Result View ────────────────────────────────────────────────────────────
+
+  Widget _buildResultView() {
+    final medicine = _result!['medicine'] as String;
+    final strength = _result!['strength'] as String;
+    final form = _result!['form'] as String;
+    final frequency = _result!['frequency'] as String;
+    final ocrText = _result!['ocr_text'] as String;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image thumbnail
+              if (_imageBytes != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.memory(_imageBytes!,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover),
+                ),
+
               const SizedBox(height: 16),
-              _SectionCard(
+
+              // ── Typed Prescription Card ──────────────────────────────────
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: const Color(0xFF2D7A4A).withOpacity(0.25)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3))
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(children: [
-                      Icon(Icons.check_circle, color: Color(0xFF2D7A4A), size: 20),
-                      SizedBox(width: 8),
-                      Text("Prescription Summary",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
-                    ]),
-                    const SizedBox(height: 16),
-
-                    // Extracted fields as cards
-                    _ResultRow(
-                        icon: Icons.medication,
-                        label: "Medicine",
-                        value: result!['medicine']),
-                    _ResultRow(
-                        icon: Icons.monitor_weight_outlined,
-                        label: "Strength",
-                        value: result!['strength']),
-                    _ResultRow(
-                        icon: Icons.category_outlined,
-                        label: "Form",
-                        value: result!['form']),
-                    _ResultRow(
-                        icon: Icons.schedule,
-                        label: "Frequency",
-                        value: result!['frequency']),
-
-                    // Raw OCR text (collapsible)
-                    if ((result!['ocr_text'] as String).isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      const Divider(),
-                      const SizedBox(height: 8),
-                      const Text("Raw OCR Text",
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black54)),
-                      const SizedBox(height: 6),
-                      Text(
-                        result!['ocr_text'],
-                        style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black45,
-                            height: 1.5),
+                    // Header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 14),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF2D7A4A),
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(16)),
                       ),
-                    ],
+                      child: const Row(children: [
+                        Icon(Icons.medication,
+                            color: Colors.white, size: 22),
+                        SizedBox(width: 10),
+                        Text("Prescription Details",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600)),
+                      ]),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _TypedField(
+                            label: "Medicine",
+                            value: medicine,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1A1A1A),
+                          ),
+
+                          const _DottedDivider(),
+
+                          Row(children: [
+                            Expanded(
+                              child: _TypedField(
+                                label: "Strength",
+                                value: strength,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF2D7A4A),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _TypedField(
+                                label: "Form",
+                                value: form,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ]),
+
+                          const _DottedDivider(),
+
+                          _TypedField(
+                            label: "Frequency / Dosage",
+                            value: frequency,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                            icon: Icons.schedule,
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ],
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-            // ── Disclaimer ───────────────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.warning_amber_rounded,
-                      color: Colors.orange, size: 18),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "This is a readable representation of the prescription text. "
-                      "It does not replace professional medical or pharmacy advice.",
-                      style: TextStyle(fontSize: 12, color: Colors.orange),
+              if (ocrText.isNotEmpty) _OcrTextSection(ocrText: ocrText),
+
+              const SizedBox(height: 16),
+
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: pickImage,
+                    icon: const Icon(Icons.upload_file, size: 18),
+                    label: const Text("Upload New"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF2D7A4A),
+                      side: const BorderSide(color: Color(0xFF2D7A4A)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _reset,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text("Reset"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2D7A4A),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ]),
+
+              const SizedBox(height: 16),
+              const _Disclaimer(),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ── Helper widgets ─────────────────────────────────────────────────────────────
+// ── Helper Widgets ─────────────────────────────────────────────────────────────
 
-class _SectionCard extends StatelessWidget {
-  final Widget child;
-  const _SectionCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: child,
-    );
-  }
-}
-
-class _ResultRow extends StatelessWidget {
-  final IconData icon;
+class _TypedField extends StatelessWidget {
   final String label;
   final String value;
+  final double fontSize;
+  final FontWeight fontWeight;
+  final Color color;
+  final IconData? icon;
 
-  const _ResultRow({
-    required this.icon,
+  const _TypedField({
     required this.label,
     required this.value,
+    required this.fontSize,
+    required this.fontWeight,
+    required this.color,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF7F2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 18, color: const Color(0xFF2D7A4A)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black45,
-                        fontWeight: FontWeight.w500)),
-                const SizedBox(height: 2),
-                Text(
-                  value.isNotEmpty ? value : "—",
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: value.isNotEmpty ? Colors.black87 : Colors.black26,
-                  ),
+          Text(label.toUpperCase(),
+              style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black38,
+                  letterSpacing: 1.2)),
+          const SizedBox(height: 4),
+          Row(children: [
+            if (icon != null) ...[
+              Icon(icon, size: fontSize * 0.8, color: color),
+              const SizedBox(width: 6),
+            ],
+            Expanded(
+              child: Text(
+                value.isNotEmpty ? value : "—",
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: fontWeight,
+                  color: value.isNotEmpty ? color : Colors.black26,
+                  letterSpacing: 0.3,
+                  height: 1.2,
                 ),
-              ],
+              ),
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+}
+
+class _DottedDivider extends StatelessWidget {
+  const _DottedDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: List.generate(
+          50,
+          (i) => Expanded(
+            child: Container(
+              height: 1,
+              color: i.isEven ? Colors.black12 : Colors.transparent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OcrTextSection extends StatefulWidget {
+  final String ocrText;
+  const _OcrTextSection({required this.ocrText});
+
+  @override
+  State<_OcrTextSection> createState() => _OcrTextSectionState();
+}
+
+class _OcrTextSectionState extends State<_OcrTextSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 12),
+              child: Row(children: [
+                const Icon(Icons.text_snippet_outlined,
+                    size: 18, color: Colors.black45),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text("Raw OCR Text",
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black54)),
+                ),
+                Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: Colors.black38),
+              ]),
+            ),
+          ),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: Text(widget.ocrText,
+                  style: const TextStyle(
+                      fontSize: 12, color: Colors.black45, height: 1.6)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  final String message;
+  const _ErrorBanner({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Icon(Icons.error_outline, color: Colors.red, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+            child: Text(message,
+                style: const TextStyle(color: Colors.red, fontSize: 13))),
+      ]),
+    );
+  }
+}
+
+class _Disclaimer extends StatelessWidget {
+  const _Disclaimer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "This is a readable representation of the prescription. "
+              "It does not replace professional medical or pharmacy advice.",
+              style: TextStyle(fontSize: 11, color: Colors.orange),
             ),
           ),
         ],

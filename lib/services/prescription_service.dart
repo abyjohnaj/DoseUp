@@ -3,18 +3,17 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 class PrescriptionService {
-  // Change this to your machine's IP if testing on a physical device
-  // e.g. "http://192.168.1.10:3000"
-  // For web/emulator on same machine, localhost works fine
+  // Backend runs on your machine
+  // For local web dev this works fine as both run on same machine
   static const String _baseUrl = "http://localhost:3000";
 
-  /// Sends the image bytes to the Node backend and returns structured result.
-  /// Returns a map with keys: medicine, strength, form, frequency, ocr_text
+  /// Sends image bytes to Node backend.
+  /// Tesseract.js does OCR, Ollama structures the result.
   static Future<Map<String, dynamic>> extractPrescription(
       Uint8List imageBytes) async {
     final uri = Uri.parse("$_baseUrl/extract-prescription");
 
-    // Build multipart request — backend expects field name "image"
+    // Multipart request — backend expects field name "image"
     final request = http.MultipartRequest("POST", uri);
     request.files.add(
       http.MultipartFile.fromBytes(
@@ -24,28 +23,26 @@ class PrescriptionService {
       ),
     );
 
-    final streamedResponse = await request.send().timeout(
-      const Duration(seconds: 60), // OCR + LLM can take time
+    final streamed = await request.send().timeout(
+      const Duration(seconds: 120), // Tesseract + Ollama can take time
       onTimeout: () => throw Exception(
-          "Request timed out. Make sure the backend is running on port 3000."),
+          "Timed out. Make sure the backend is running on port 3000."),
     );
 
-    final responseBody = await streamedResponse.stream.bytesToString();
+    final body = await streamed.stream.bytesToString();
 
-    if (streamedResponse.statusCode != 200) {
-      // Try to parse error message from backend
+    if (streamed.statusCode != 200) {
       try {
-        final errorJson = jsonDecode(responseBody);
-        throw Exception(errorJson['details'] ?? errorJson['error'] ?? "Backend error");
+        final err = jsonDecode(body);
+        throw Exception(err['details'] ?? err['error'] ?? "Backend error");
       } catch (_) {
-        throw Exception("Backend returned status ${streamedResponse.statusCode}");
+        throw Exception("Backend returned status ${streamed.statusCode}");
       }
     }
 
-    final data = jsonDecode(responseBody) as Map<String, dynamic>;
+    final data = jsonDecode(body) as Map<String, dynamic>;
+    final extracted = (data['extracted'] as Map<String, dynamic>?) ?? {};
 
-    // Normalize — ensure all expected keys exist
-    final extracted = data['extracted'] as Map<String, dynamic>? ?? {};
     return {
       'medicine': extracted['medicine'] as String? ?? '',
       'strength': extracted['strength'] as String? ?? '',

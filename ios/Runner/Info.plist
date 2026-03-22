@@ -28,6 +28,12 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Used to scan prescriptions</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Used to upload prescriptions from gallery</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Used to save prescription images</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
