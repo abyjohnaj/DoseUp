@@ -1,3 +1,4 @@
+import 'package:doseup/pages/compare_page.dart';
 import 'package:doseup/pages/login_page.dart';
 import 'package:doseup/pages/register_page.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
         '/search': (context) => const SearchPage(),
         '/prescription': (context) => const PrescriptionPage(),
         '/forum': (context) => const ForumPage(),
+        '/compare': (context) => const ComparePage(),
       },
     );
   }
